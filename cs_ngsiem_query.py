@@ -43,7 +43,7 @@ MAX_WAIT      = 120
 
 # SecOps
 SECOPS_SCOPE = "https://www.googleapis.com/auth/chronicle-backstory"
-SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
+#SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
 
 
 # ── Step 1: OAuth2 ────────────────────────────────────────────────────────────
