@@ -37,6 +37,7 @@ REPOSITORY    = os.getenv("CS_REPOSITORY", "search-all")
 SEARCH_NAME    = "inventory"
 LSQL_QUERY     = "groupBy(ComputerName) | sort(count, order=desc)"
 LOOKBACK_HOURS = 24
+LOG_TYPE       = "CS_NGSIEM_CUSTOM"
 
 # Polling
 POLL_INTERVAL = 5
@@ -155,7 +156,7 @@ def send_to_secops(events: list):
         SECOPS_INGEST_URL,
         json={
             "customerId": customer_id,
-            "logType":    "CS_NGSIEM",
+            "logType":    LOG_TYPE,
             "entries":    log_entries
         },
         headers={
