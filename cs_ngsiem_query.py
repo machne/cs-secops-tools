@@ -43,13 +43,10 @@ MAX_WAIT      = 120
 
 # SecOps
 SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
-SECOPS_SCOPE = [
+SECOPS_SCOPES = [
     "https://www.googleapis.com/auth/malachite-ingestion",
     "https://www.googleapis.com/auth/cloud-platform"
 ]
-#SECOPS_SCOPE = "https://www.googleapis.com/auth/chronicle-backstory"
-#SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
-#SECOPS_SCOPE = "https://www.googleapis.com/auth/malachite-ingestion"
 
 
 # ── Step 1: OAuth2 ────────────────────────────────────────────────────────────
@@ -153,14 +150,14 @@ def get_secops_token() -> str:
         raise EnvironmentError("Missing SECOPS_SA_KEY")
 
     sa_info = json.loads(sa_key_json)
-    credentials = service_account.Credentials.from_service_account_info(
+    creds = service_account.Credentials.from_service_account_info(
         sa_info,
-        scopes=SECOPS_SCOPE
+        scopes=SECOPS_SCOPES
     )
     auth_req = google.auth.transport.requests.Request()
-    credentials.refresh(auth_req)
+    creds.refresh(auth_req)
     print("[+] SecOps token obtained successfully")
-    return credentials.token
+    return creds.token
 
 
 def send_to_secops(events: list):
@@ -213,8 +210,6 @@ def send_to_secops(events: list):
         resp.raise_for_status()
 
     print(f"[+] Sent {len(log_entries)} entries to SecOps successfully")
-    print(f"[*] SecOps token (first 20 chars): {credentials.token[:20]}")
-    print(f"[*] Token scopes: {credentials.scopes}")
 
 
 # ── Step 5: Display results ───────────────────────────────────────────────────
