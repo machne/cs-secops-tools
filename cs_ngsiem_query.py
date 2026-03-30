@@ -42,7 +42,7 @@ POLL_INTERVAL = 5
 MAX_WAIT      = 120
 
 # SecOps
-SECOPS_INGEST_URL = "https://us-malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
+SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
 SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
 
 
