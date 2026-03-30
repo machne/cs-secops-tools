@@ -37,7 +37,7 @@ REPOSITORY    = os.getenv("CS_REPOSITORY", "search-all")
 SEARCH_NAME    = "inventory"
 LSQL_QUERY     = "groupBy(ComputerName) | sort(count, order=desc)"
 LOOKBACK_HOURS = 24
-LOG_TYPE       = "CS_NGSIEM_CUSTOM"
+LOG_TYPE       = "CS_EDR"
 
 # Polling
 POLL_INTERVAL = 5
