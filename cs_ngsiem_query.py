@@ -220,8 +220,8 @@ def get_secops_token() -> str:
     sa_info = json.loads(sa_key_json)
     credentials = service_account.Credentials.from_service_account_info(
         sa_info,
-        #scopes=["https://www.googleapis.com/auth/chronicle-backstory"]
-        scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        scopes=["https://www.googleapis.com/auth/chronicle-backstory"]
+        #scopes=["https://www.googleapis.com/auth/cloud-platform"]
     )
     auth_req = google.auth.transport.requests.Request()
     credentials.refresh(auth_req)
