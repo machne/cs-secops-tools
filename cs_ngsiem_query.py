@@ -161,15 +161,11 @@ def send_to_secops(events: list):
                 "eventType": "GENERIC_EVENT",
                 "productName": "CrowdStrike NG-SIEM",
                 "vendorName": "CrowdStrike",
-                "logType": "CS_EDR"
+                "logType": LOG_TYPE
             },
             "principal": {
                 "hostname": hostname
-            },
-            "additionalFields": [
-                {"key": "search_name", "value": {"stringValue": SEARCH_NAME}},
-                {"key": "count",       "value": {"stringValue": count}}
-            ]
+            },   
         })
 
     resp = requests.post(
