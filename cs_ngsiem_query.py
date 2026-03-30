@@ -42,13 +42,14 @@ POLL_INTERVAL = 5
 MAX_WAIT      = 120
 
 # SecOps
-#SECOPS_SCOPE = "https://www.googleapis.com/auth/chronicle-backstory"
-#SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
-#SECOPS_SCOPE = "https://www.googleapis.com/auth/malachite-ingestion"
+SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
 SECOPS_SCOPE = [
     "https://www.googleapis.com/auth/malachite-ingestion",
     "https://www.googleapis.com/auth/cloud-platform"
 ]
+#SECOPS_SCOPE = "https://www.googleapis.com/auth/chronicle-backstory"
+#SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
+#SECOPS_SCOPE = "https://www.googleapis.com/auth/malachite-ingestion"
 
 
 # ── Step 1: OAuth2 ────────────────────────────────────────────────────────────
