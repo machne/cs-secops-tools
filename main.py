@@ -10,7 +10,9 @@ def run_job():
         cs_ngsiem_query.main()
         return "OK", 200
     except Exception as e:
+        import traceback
         print(f"[!] Job failed: {e}")
+        print(traceback.format_exc())
         return str(e), 500
 
 @app.route("/env-check", methods=["GET"])

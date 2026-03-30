@@ -206,9 +206,10 @@ def display_results(data: dict):
         )
         print(f"hostname={hostname} count={count}")
 
-    #print(f"total_hostnames={len(events)}")
-
-    #print(f"total_hostnames={len(events)}")
+    print(f"total_hostnames={len(events)}")
+    
+    print("[*] Attempting SecOps ingest...")
+    send_to_secops(events)
 
 # ── SecOps Ingestion ──────────────────────────────────────────────────────────
 def get_secops_token() -> str:
