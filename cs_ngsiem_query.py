@@ -186,7 +186,7 @@ def send_to_secops(events: list):
 
     payload = {
         "customerId": customer_id,
-        "logType":    "CS_EDR",
+        "logType":    "CS_NGSIEM",
         "entries":    log_entries
     }
 
