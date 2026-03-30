@@ -44,11 +44,17 @@ POLL_INTERVAL = 5
 MAX_WAIT      = 120
 
 # SecOps
-SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
+# SecOps
+SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/udmevents:batchCreate"
 SECOPS_SCOPES = [
     "https://www.googleapis.com/auth/malachite-ingestion",
     "https://www.googleapis.com/auth/cloud-platform"
 ]
+#SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
+#SECOPS_SCOPES = [
+#    "https://www.googleapis.com/auth/malachite-ingestion",
+#    "https://www.googleapis.com/auth/cloud-platform"
+#]
 
 
 # ── Step 1: CrowdStrike OAuth2 ────────────────────────────────────────────────
@@ -134,7 +140,9 @@ def send_to_secops(events: list):
     if not customer_id:
         raise EnvironmentError("Missing SECOPS_CUSTOMER_ID")
 
-    log_entries = []
+    token = get_secops_token()
+
+    udm_events = []
     for row in events:
         hostname = (
             row.get("ComputerName")
@@ -142,25 +150,36 @@ def send_to_secops(events: list):
             or row.get("_field")
             or "unknown"
         )
-        count = (
+        count = str(
             row.get("_count")
             or row.get("count")
             or row.get("value")
-            or "-"
+            or "0"
         )
-        log_entries.append({
-            "logText": f"search_name={SEARCH_NAME} hostname={hostname} count={count}"
+        udm_events.append({
+            "metadata": {
+                "eventType": "GENERIC_EVENT",
+                "productName": "CrowdStrike NG-SIEM",
+                "vendorName": "CrowdStrike",
+                "logType": "CS_EDR"
+            },
+            "principal": {
+                "hostname": hostname
+            },
+            "additionalFields": [
+                {"key": "search_name", "value": {"stringValue": SEARCH_NAME}},
+                {"key": "count",       "value": {"stringValue": count}}
+            ]
         })
 
     resp = requests.post(
         SECOPS_INGEST_URL,
         json={
             "customerId": customer_id,
-            "logType":    LOG_TYPE,
-            "entries":    log_entries
+            "events":     udm_events
         },
         headers={
-            "Authorization": f"Bearer {get_secops_token()}",
+            "Authorization": f"Bearer {token}",
             "Content-Type":  "application/json"
         },
         timeout=30
@@ -169,8 +188,7 @@ def send_to_secops(events: list):
     if resp.status_code != 200:
         raise RuntimeError(f"SecOps ingest failed — HTTP {resp.status_code}: {resp.text}")
 
-    print(f"[+] Sent {len(log_entries)} entries to SecOps — log_type=CS_NGSIEM")
-
+    print(f"[+] Sent {len(udm_events)} UDM events to SecOps")
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
