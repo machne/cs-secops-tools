@@ -22,6 +22,11 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
+import json
+import google.auth
+import google.auth.transport.requests
+from google.oauth2 import service_account
+import base64
 
 load_dotenv()
 
@@ -203,6 +208,74 @@ def display_results(data: dict):
 
     #print(f"total_hostnames={len(events)}")
 
+    #print(f"total_hostnames={len(events)}")
+
+# ── SecOps Ingestion ──────────────────────────────────────────────────────────
+def get_secops_token() -> str:
+    sa_key_json = os.getenv("SECOPS_SA_KEY")
+    if not sa_key_json:
+        raise EnvironmentError("Missing SECOPS_SA_KEY")
+
+    sa_info = json.loads(sa_key_json)
+    credentials = service_account.Credentials.from_service_account_info(
+        sa_info,
+        scopes=["https://www.googleapis.com/auth/chronicle-backstory"]
+    )
+    auth_req = google.auth.transport.requests.Request()
+    credentials.refresh(auth_req)
+    return credentials.token
+
+
+def send_to_secops(events: list):
+    customer_id = os.getenv("SECOPS_CUSTOMER_ID")
+    if not customer_id:
+        raise EnvironmentError("Missing SECOPS_CUSTOMER_ID")
+
+    token = get_secops_token()
+
+    url = f"https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
+
+    # Build log entries from events
+    log_entries = []
+    for row in events:
+        hostname = (
+            row.get("ComputerName")
+            or row.get("hostname")
+            or row.get("_field")
+            or "unknown"
+        )
+        count = (
+            row.get("_count")
+            or row.get("count")
+            or row.get("value")
+            or "-"
+        )
+        log_line = f"hostname={hostname} count={count}"
+        log_entries.append({
+            "logText": log_line
+        })
+
+    payload = {
+        "customerId": customer_id,
+        "logType": "CS_EDR",
+        "entries": log_entries
+    }
+
+    resp = requests.post(
+        url,
+        json=payload,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        timeout=30
+    )
+
+    if resp.status_code != 200:
+        print(f"[!] SecOps ingest failed — HTTP {resp.status_code}: {resp.text[:300]}")
+        resp.raise_for_status()
+
+    print(f"[+] Sent {len(log_entries)} entries to SecOps successfully")
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
