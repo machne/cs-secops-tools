@@ -140,19 +140,51 @@ def poll_job(token: str, job_id: str) -> dict:
 
 
 # ── Step 4: Display results ───────────────────────────────────────────────────
+# def display_results(data: dict):
+#     events = data.get("events", [])
+
+#     if not events:
+#         print("\n[!] No results returned.")
+#         print("    Metadata:", data.get("metaData") or data.get("metadata") or "none")
+#         return
+
+#     print(f"\n{'─'*55}")
+#     print(f"  Hostname Counts — Last {LOOKBACK_HOURS}hr  |  repo: {REPOSITORY}")
+#     print(f"{'─'*55}")
+#     print(f"  {'Hostname':<40} {'Count':>8}")
+#     print(f"{'─'*55}")
+
+#     for row in events:
+#         hostname = (
+#             row.get("ComputerName")
+#             or row.get("hostname")
+#             or row.get("_field")
+#             or "unknown"
+#         )
+#         count = (
+#             row.get("_count")
+#             or row.get("count")
+#             or row.get("value")
+#             or "-"
+#         )
+#         print(f"  {str(hostname):<40} {str(count):>8}")
+
+#     print(f"{'─'*55}")
+#     print(f"  Total unique hostnames: {len(events)}")
+
+#     # Show metadata if available
+#     meta = data.get("metaData") or data.get("metadata")
+#     if meta:
+#         print(f"\n  Metadata:")
+#         for k, v in meta.items():
+#             print(f"    {k}: {v}")
+
 def display_results(data: dict):
     events = data.get("events", [])
 
     if not events:
-        print("\n[!] No results returned.")
-        print("    Metadata:", data.get("metaData") or data.get("metadata") or "none")
+        print("[!] No results returned.")
         return
-
-    print(f"\n{'─'*55}")
-    print(f"  Hostname Counts — Last {LOOKBACK_HOURS}hr  |  repo: {REPOSITORY}")
-    print(f"{'─'*55}")
-    print(f"  {'Hostname':<40} {'Count':>8}")
-    print(f"{'─'*55}")
 
     for row in events:
         hostname = (
@@ -167,17 +199,9 @@ def display_results(data: dict):
             or row.get("value")
             or "-"
         )
-        print(f"  {str(hostname):<40} {str(count):>8}")
+        print(f"hostname={hostname} count={count}")
 
-    print(f"{'─'*55}")
-    print(f"  Total unique hostnames: {len(events)}")
-
-    # Show metadata if available
-    meta = data.get("metaData") or data.get("metadata")
-    if meta:
-        print(f"\n  Metadata:")
-        for k, v in meta.items():
-            print(f"    {k}: {v}")
+    #print(f"total_hostnames={len(events)}")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
