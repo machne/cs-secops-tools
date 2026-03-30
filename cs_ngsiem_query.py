@@ -44,7 +44,11 @@ MAX_WAIT      = 120
 # SecOps
 #SECOPS_SCOPE = "https://www.googleapis.com/auth/chronicle-backstory"
 #SECOPS_SCOPE      = "https://www.googleapis.com/auth/cloud-platform"
-SECOPS_SCOPE = "https://www.googleapis.com/auth/malachite-ingestion"
+#SECOPS_SCOPE = "https://www.googleapis.com/auth/malachite-ingestion"
+SECOPS_SCOPE = [
+    "https://www.googleapis.com/auth/malachite-ingestion",
+    "https://www.googleapis.com/auth/cloud-platform"
+]
 
 
 # ── Step 1: OAuth2 ────────────────────────────────────────────────────────────
@@ -150,7 +154,7 @@ def get_secops_token() -> str:
     sa_info = json.loads(sa_key_json)
     credentials = service_account.Credentials.from_service_account_info(
         sa_info,
-        scopes=[SECOPS_SCOPE]
+        scopes=SECOPS_SCOPE
     )
     auth_req = google.auth.transport.requests.Request()
     credentials.refresh(auth_req)
@@ -208,6 +212,8 @@ def send_to_secops(events: list):
         resp.raise_for_status()
 
     print(f"[+] Sent {len(log_entries)} entries to SecOps successfully")
+    print(f"[*] SecOps token (first 20 chars): {credentials.token[:20]}")
+    print(f"[*] Token scopes: {credentials.scopes}")
 
 
 # ── Step 5: Display results ───────────────────────────────────────────────────
