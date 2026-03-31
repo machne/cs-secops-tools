@@ -22,6 +22,7 @@ import time
 import json
 import requests
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 from google.oauth2 import service_account
 import google.auth.transport.requests
 
@@ -141,6 +142,7 @@ def send_to_secops(events: list):
         raise EnvironmentError("Missing SECOPS_CUSTOMER_ID")
 
     token = get_secops_token()
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     udm_events = []
     for row in events:
@@ -158,18 +160,19 @@ def send_to_secops(events: list):
         )
         udm_events.append({
             "metadata": {
+                "eventTimestamp": now,
                 "eventType": "GENERIC_EVENT",
                 "productName": "CrowdStrike NG-SIEM",
                 "vendorName": "CrowdStrike",
-                "logType": LOG_TYPE
+                "description": f"search_name={SEARCH_NAME} count={count}"
             },
             "principal": {
                 "hostname": hostname
-            },   
+            }
         })
 
     resp = requests.post(
-        SECOPS_INGEST_URL,
+        "https://malachiteingestion-pa.googleapis.com/v2/udmevents:batchCreate",
         json={
             "customerId": customer_id,
             "events":     udm_events
