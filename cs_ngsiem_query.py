@@ -37,7 +37,7 @@ REPOSITORY    = os.getenv("CS_REPOSITORY", "search-all")
 # Query
 SEARCH_NAME    = "inventory"
 LSQL_QUERY     = "groupBy(ComputerName) | sort(count, order=desc)"
-LOOKBACK_HOURS = 24
+LOOKBACK_MINUTES = 15
 LOG_TYPE       = "CS_EDR"
 
 # Polling
@@ -81,7 +81,7 @@ def submit_query(token: str) -> str:
         f"{BASE_URL}/humio/api/v1/repositories/{REPOSITORY}/queryjobs",
         json={
             "queryString": LSQL_QUERY,
-            "start":       f"{LOOKBACK_HOURS}h",
+            "start":       f"{LOOKBACK_MINUTES}minutes",
             "end":         "now",
             "timeZone":    "America/New_York",
         },
