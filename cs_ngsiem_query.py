@@ -36,7 +36,7 @@ REPOSITORY    = os.getenv("CS_REPOSITORY", "search-all")
 
 # Query
 SEARCH_NAME    = "inventory"
-LSQL_QUERY     = "groupBy(ComputerName) | sort(count, order=desc)"
+LSQL_QUERY     = "test(#event_simpleName != \"\") | groupby([ComputerName]) | drop(_count)"
 LOOKBACK_MINUTES = 15
 LOG_TYPE       = "CS_EDR"
 
