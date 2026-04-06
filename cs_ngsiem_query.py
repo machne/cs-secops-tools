@@ -1,14 +1,14 @@
 """
 cs_ngsiem_query.py
 ------------------
-Connects to CrowdStrike Next-Gen SIEM via OAuth2 and runs a
-LogScale/Humio query job, then sends results to Google SecOps.
+Connects to CrowdStrike Next-Gen SIEM via OAuth2, runs a query job,
+and sends hostnames to Google SecOps as UDM events.
 
 Endpoints used:
-    POST /humio/api/v1/repositories/<repo>/queryjobs      — initiate search
-    GET  /humio/api/v1/repositories/<repo>/queryjobs/<id> — poll + get results
+    POST /humio/api/v1/repositories/<repo>/queryjobs
+    GET  /humio/api/v1/repositories/<repo>/queryjobs/<id>
 
-Secrets (injected by Cloud Run via Secret Manager):
+.env keys:
     CS_CLIENT_ID       = CrowdStrike OAuth2 client ID
     CS_CLIENT_SECRET   = CrowdStrike OAuth2 client secret
     CS_BASE_URL        = https://api.laggar.gcw.crowdstrike.com
@@ -34,28 +34,18 @@ CLIENT_SECRET = os.getenv("CS_CLIENT_SECRET")
 BASE_URL      = os.getenv("CS_BASE_URL", "https://api.crowdstrike.com").rstrip("/")
 REPOSITORY    = os.getenv("CS_REPOSITORY", "search-all")
 
-# Query
-SEARCH_NAME    = "inventory"
-LSQL_QUERY     = "test(#event_simpleName != \"\") | groupby([ComputerName]) | drop(_count)"
-LOOKBACK_MINUTES = 15
-LOG_TYPE       = "CS_EDR"
+SEARCH_NAME      = "inventory"
+LSQL_QUERY       = "test(#event_simpleName != \"\") | groupby([ComputerName]) | drop(_count)"
+LOOKBACK_MINUTES = 60
 
-# Polling
 POLL_INTERVAL = 5
 MAX_WAIT      = 120
 
-# SecOps
-# SecOps
 SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/udmevents:batchCreate"
-SECOPS_SCOPES = [
+SECOPS_SCOPES     = [
     "https://www.googleapis.com/auth/malachite-ingestion",
-    "https://www.googleapis.com/auth/cloud-platform"
+    "https://www.googleapis.com/auth/cloud-platform",
 ]
-#SECOPS_INGEST_URL = "https://malachiteingestion-pa.googleapis.com/v2/unstructuredlogentries:batchCreate"
-#SECOPS_SCOPES = [
-#    "https://www.googleapis.com/auth/malachite-ingestion",
-#    "https://www.googleapis.com/auth/cloud-platform"
-#]
 
 
 # ── Step 1: CrowdStrike OAuth2 ────────────────────────────────────────────────
@@ -123,7 +113,7 @@ def poll_job(token: str, job_id: str) -> dict:
     raise TimeoutError(f"Query did not complete within {MAX_WAIT}s")
 
 
-# ── Step 4: SecOps ingestion ──────────────────────────────────────────────────
+# ── Step 4: Send to SecOps ────────────────────────────────────────────────────
 def get_secops_token() -> str:
     sa_info = json.loads(os.getenv("SECOPS_SA_KEY", "{}"))
     if not sa_info:
@@ -142,52 +132,34 @@ def send_to_secops(events: list):
         raise EnvironmentError("Missing SECOPS_CUSTOMER_ID")
 
     token = get_secops_token()
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now   = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     udm_events = []
     for row in events:
-        hostname = (
-            row.get("ComputerName")
-            or row.get("hostname")
-            or row.get("_field")
-            or "unknown"
-        )
-        count = str(
-            row.get("_count")
-            or row.get("count")
-            or row.get("value")
-            or "0"
-        )
+        hostname = row.get("ComputerName") or "unknown"
         udm_events.append({
             "metadata": {
                 "eventTimestamp": now,
-                "eventType": "GENERIC_EVENT",
-                "productName": "CrowdStrike NG-SIEM",
-                "vendorName": "CrowdStrike",
-                "description": f"search_name={SEARCH_NAME}"
+                "eventType":      "GENERIC_EVENT",
+                "productName":    "CrowdStrike NG-SIEM",
+                "vendorName":     "CrowdStrike",
+                "description":    f"search_name={SEARCH_NAME}",
             },
             "principal": {
-                "hostname": hostname
-            }
+                "hostname": hostname,
+            },
         })
 
     resp = requests.post(
-        "https://malachiteingestion-pa.googleapis.com/v2/udmevents:batchCreate",
-        json={
-            "customerId": customer_id,
-            "events":     udm_events
-        },
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type":  "application/json"
-        },
-        timeout=30
+        SECOPS_INGEST_URL,
+        json={"customerId": customer_id, "events": udm_events},
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        timeout=30,
     )
-
     if resp.status_code != 200:
         raise RuntimeError(f"SecOps ingest failed — HTTP {resp.status_code}: {resp.text}")
-
     print(f"[+] Sent {len(udm_events)} UDM events to SecOps")
+
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
