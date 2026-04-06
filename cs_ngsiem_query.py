@@ -146,7 +146,7 @@ def send_to_secops(events: list):
                 "description":    f"search_name={SEARCH_NAME}",
             },
             "principal": {
-                "hostname": hostname,
+                "hostname": hostname.lower(),
             },
         })
 
