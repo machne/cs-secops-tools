@@ -164,7 +164,7 @@ def send_to_secops(events: list):
                 "eventType": "GENERIC_EVENT",
                 "productName": "CrowdStrike NG-SIEM",
                 "vendorName": "CrowdStrike",
-                "description": f"search_name={SEARCH_NAME} count={count}"
+                "description": f"search_name={SEARCH_NAME}"
             },
             "principal": {
                 "hostname": hostname
